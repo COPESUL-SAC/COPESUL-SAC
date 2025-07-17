@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COPESUL SAC</title>
+    <link rel="icon" href="COPESUL.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Enlace a tu hoja de estilos CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Librerías para PDF y Gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Librería para generar Excel (SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Librería para la Firma Digital -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/1.5.3/signature_pad.min.js"></script>
+</head>
+<body>
+    <div id="authPage" class="auth-container">
+        <div class="auth-box">
+            <div class="profile-icon">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h2 id="authTitle">Iniciar Sesión</h2>
+            <form id="authForm">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" required>
+
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" required>
+
+                <p id="authMessage" class="auth-message"></p>
+                <button type="submit" id="authSubmitBtn">Iniciar Sesión</button>
+            </form>
+            <p class="toggle-form-text">¿No tienes cuenta? <a href="#" id="toggleAuthMode">Regístrate aquí</a></p>
+        </div>
+    </div>
+
+    <div id="mainDashboardPage" class="main-dashboard-container" style="display: none;">
+        <header>
+            <div class="logo animated-logo">MENÚ DE CORPORACION PERUANA DE SUMINISTROS LOGISTICOS</div>
+            <div class="header-actions">
+                <button id="logoutBtnMain" class="action-btn logout-btn">Cerrar Sesión</button>
+            </div>
+        </header>
+        <main class="dashboard-main">
+            <div class="dashboard-option" id="goToMaintenanceOption">
+                <i class="fas fa-wrench"></i>
+                <span>MANTENIMIENTO</span>
+            </div>
+            <div class="dashboard-option" id="goToChecklistOption">
+                <i class="fas fa-clipboard-list"></i>
+                <span>CHECK LIST</span>
+            </div>
+        </main>
+    </div>
+
+    <div id="appPage" class="app-container" style="display: none;">
+        <header>
+            <div class="logo animated-logo">CHECK LIST - FILE DE PERSONAL</div>
+            <div class="header-actions">
+                <button id="addEmployeeBtn" class="action-btn">Añadir Nuevo</button> 
+                <!-- BOTONES ACTUALIZADOS -->
+                <button id="viewChecklistSummaryPdfBtn" class="action-btn">Visualización Breve</button>
+                <button id="downloadChecklistSummaryPdfBtn" class="action-btn">Descargar Reporte</button>
+                <input type="text" id="searchEmployee" placeholder="Buscar empleado...">
+                <button id="backToMainFromAppBtn" class="action-btn">Volver al Menú Principal</button>
+                <button id="logoutBtn" class="action-btn logout-btn">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="employee-list-section">
+                <h2>Colaboradores</h2>
+                <ul id="employeeListUl">
+                    </ul>
+            </section>
+
+            <section class="checklist-section">
+                <h2 id="currentEmployeeDisplay">Selecciona un Colaborador o crea uno nuevo</h2>
+
+                <div class="checklist-controls">
+                    <div>
+                        <input type="radio" id="conditionActivo" name="employeeCondition" value="activo">
+                        <label for="conditionActivo">Activo</label>
+                        <input type="radio" id="conditionNoActivo" name="employeeCondition" value="no_activo">
+                        <label for="conditionNoActivo">No Activo</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="noAplicaAreas">
+                        <label for="noAplicaAreas">Otros</label>
+                    </div>
+                </div>
+
+                <div class="checklist-table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Documento</th>
+                                <th>Estado</th>
+                                <th>Archivo</th>
+                                <th>Notas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="checklistBody">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="checklist-actions">
+                    <button id="saveChecklistBtn" class="action-btn">Guardar Checklist</button>
+                    <button id="newChecklistBtn" class="action-btn">Crear Nuevo Checklist</button>
+                </div>
+
+                <div class="history-log">
+                    <h3>Historial del Colaborador</h3>
+                    <ul id="employeeHistoryUl">
+                        </ul>
+                </div>
+            </section>
+        </main>
+        <footer>
+            <p>© 2025 COPESUL SAC. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+    <div id="addEmployeeModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Añadir Nuevo Colaborador</h2>
+            <form id="newEmployeeForm">
+                <label for="newEmployeeFullName">Nombre Completo:</label>
+                <input type="text" id="newEmployeeFullName" required>
+
+                <label for="newEmployeeDNI">DNI:</label>
+                <input type="text" id="newEmployeeDNI" maxlength="8" pattern="[0-9]{8}" required>
+                <label for="newEmployeeArea">Área:</label>
+                <input type="text" id="newEmployeeArea">
+                <label for="newEmployeeCompany">Empresa:</label>
+                <input type="text" id="newEmployeeCompany">
+                <p id="newEmployeeMessage" class="message"></p>
+                <div class="modal-actions">
+                    <button type="submit" id="saveNewEmployeeBtn">Guardar</button>
+                    <button type="button" id="cancelNewEmployeeBtn">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="maintenancePage" class="app-container" style="display: none;">
+        <header>
+            <div class="logo">SISTEMA DE GESTIÓN DE MANTENIMIENTO</div>
+            <div class="header-actions">
+                <button id="newReportBtn" class="action-btn">Crear Nuevo Reporte</button>
+                <button id="openSearchModalBtn" class="action-btn">Buscar Reporte</button>
+                <button id="downloadExcelBtn" class="action-btn">Descargar Lista (Excel)</button>
+                <button id="backToMainFromMaintenanceBtn" class="action-btn">Volver al Menú Principal</button>
+                <button id="logoutBtnMaintenance" class="action-btn logout-btn">Cerrar Sesión</button>
+            </div>
+        </header>
+        <main class="maintenance-main">
+            <section class="maintenance-form-section">
+                <h2>Detalle del Reporte de Mantenimiento</h2>
+                <form id="maintenanceForm">
+                    <div class="form-group">
+                        <label for="reportId">ID REPORTE:</label>
+                        <input type="text" id="reportId" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">ESTATUS:</label>
+                        <select id="status" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="incidenceDate">FECHA DE INCIDENCIA:</label>
+                        <input type="date" id="incidenceDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="attentionDate">FECHA DE ATENCION:</label>
+                        <input type="date" id="attentionDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryDate">FECHA DE ENTREGA:</label>
+                        <input type="date" id="deliveryDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="horaInicio">HORA INICIO:</label>
+                        <input type="time" id="horaInicio">
+                    </div>
+                    <div class="form-group">
+                        <label for="horaFinalizada">HORA FINALIZADA:</label>
+                        <input type="time" id="horaFinalizada">
+                    </div>
+                    <div class="form-group">
+                        <label for="equipmentName">NOMBRE DE EQUIPO:</label>
+                        <select id="equipmentName" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenanceType">TIPO DE MANTENIMIENTO:</label>
+                        <select id="maintenanceType" required></select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="reportedIncidence">INCIDENCIA REPORTADA:</label>
+                        <textarea id="reportedIncidence" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="reviewedComponent">COMPONENTE REVISADO:</label>
+                        <textarea id="reviewedComponent" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="observations">OBSERVACIONES:</label>
+                        <textarea id="observations" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="workDone">TRABAJO REALIZADO:</label>
+                        <textarea id="workDone" rows="3"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="sparePartsUsed">REPUESTOS EMPLEADOS:</label>
+                        <textarea id="sparePartsUsed" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsibleTechnician">TECNICO RESPONSABLE:</label>
+                        <select id="responsibleTechnician" required></select>
+                    </div>
+                    <div class="form-group signature-group">
+                        <label for="vb">VºBº (Firma):</label>
+                        <div class="signature-pad-container">
+                             <canvas id="signature-canvas"></canvas>
+                        </div>
+                        <button type="button" id="clearSignatureBtn" class="action-btn cancel-btn">Limpiar Firma</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="operatorInShift">OPERADOR EN TURNO:</label>
+                        <input type="text" id="operatorInShift">
+                    </div>
+                    <div class="form-group full-width form-actions">
+                        <p id="maintenanceMessage" class="message"></p>
+                        <button type="submit" id="saveReportBtn" class="action-btn">Guardar Reporte</button>
+                    </div>
+                </form>
+            </section>
+            <section class="report-history-log">
+                <h3>Historial del Reporte</h3>
+                <ul id="reportHistoryUl">
+                </ul>
+            </section>
+            <section class="maintenance-list-section">
+                <h2>Lista de Reportes</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Estatus</th>
+                                <th>F. Incidencia</th>
+                                <th>Equipo</th>
+                                <th>Tipo Mant.</th>
+                                <th>Técnico</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintenanceReportListBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+    <div id="searchModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeSearchModalBtn">×</span>
+            <h2>Buscar Reportes de Mantenimiento</h2>
+            <form id="searchForm">
+                <div class="form-group">
+                    <label for="searchStartDate">Fecha de Incidencia (Desde):</label>
+                    <input type="date" id="searchStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="searchEndDate">Fecha de Incidencia (Hasta):</label>
+                    <input type="date" id="searchEndDate">
+                </div>
+                <div class="form-group">
+                    <label for="searchStatus">Estatus:</label>
+                    <select id="searchStatus"></select>
+                </div>
+                <div class="form-group">
+                    <label for="searchEquipmentName">Nombre de Equipo:</label>
+                    <select id="searchEquipmentName"></select>
+                </div>
+                <div class="form-group">
+                    <label for="searchMaintenanceType">Tipo de Mantenimiento:</label>
+                    <select id="searchMaintenanceType"></select>
+                </div>
+            </form>
+            <div class="modal-actions">
+                <button type="button" id="resetSearchBtn" class="action-btn cancel-btn">Limpiar</button>
+                <button type="button" id="applySearchBtn" class="action-btn">Buscar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div style="position: absolute; left: -9999px; top: -9999px;">
+        <canvas id="chartCanvas" width="800" height="400"></canvas>
+    </div>
+
+    <!-- Enlace a tu archivo JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
